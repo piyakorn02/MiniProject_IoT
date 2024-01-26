@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <title>project</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .temperatureChart {
+            width: 1000px; /* ปรับความกว้างตามที่ต้องการ */
+            height: 500px; /* ปรับความสูงตามที่ต้องการ */
+        }
+        table {
+            font-family: arial, sans-serif;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        td,
+        th {
+            border: 4px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #dddddd;
+        }
+
+        /* Add a border between columns */
+        .border-between-columns {
+            border-right: 2px solid #ddd;
+        }
+    </style>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">Monitoring</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto"> <!-- Align to the right -->
+                <li class="nav-item active">
+                    <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Features</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Pricing</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled" href="#">Disabled</a>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-outline-success my-2 my-sm-0" id="loginButton">Login</button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    <div class="modal fade" id="loginSuccessModal" tabindex="-1" aria-labelledby="loginSuccessModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="loginSuccessModalLabel">Login Success</h5>
+                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    You have successfully logged in.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('loginButton').addEventListener('click', function () {
+            // Trigger the modal when the login button is clicked
+            $('#loginSuccessModal').modal('show');
+        });
+    </script>  <!-- ______________________________________________________________________________________________ -->
+    
+</head>
+
+<body style="background-color: rgb(255, 255, 255);">
+    
+    <div class="container-fluid p-5 bg-primary text-white text-center">
+        <h1>Monitoring</h1>
+        <p>Check the temperature level from the board.</p>
+    </div>
+    <div class="container mt-5">
+        <div id="sensorData">
+           
+          </div>
+        <script>
+            setInterval(logResult, 3000);
+
+function logResult() {
+    fetch('http://192.168.203.221:3000/sensor')
+        .then(response => response.json())
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                const latestSensorData = data[data.length - 1];
+
+                // บันทึกผลลัพธ์ในตาราง
+                const resultTableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+                const newRow = resultTableBody.insertRow(0);
+                const timeCell = newRow.insertCell(0);
+                const temperatureCell = newRow.insertCell(1);
+                const humidityCell = newRow.insertCell(2);
+
+                const currentTime = new Date();
+                const formattedTime = currentTime.toLocaleTimeString();
+                timeCell.innerHTML = formattedTime;
+                temperatureCell.innerHTML = latestSensorData.temperature;
+                humidityCell.innerHTML = latestSensorData.humidity;
+
+                // แสดงผลลัพธ์ในแถวแรกของตาราง
+                document.getElementById('temperatureValue').innerText = `Temperature: ${latestSensorData.temperature}`;
+                document.getElementById('humidityValue').innerText = `Humidity: ${latestSensorData.humidity}`;
+            } else {
+                console.error('Invalid data structure:', data);
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+function fetchData() {
+    fetch('http://192.168.203.221:3000/sensor')
+        .then(response => response.json())
+        .then(data => {
+            if (Array.isArray(data) && data.length > 0) {
+                const latestSensorData = data[data.length - 1];
+
+                // Update temperature value in the HTML
+                document.getElementById('temperatureValue').innerText = `Temperature: ${latestSensorData.temperature}`;
+                document.getElementById('humidityValue').innerText = `Humidity: ${latestSensorData.humidity}`;
+
+                // Update the temperature data array
+                temperatureData.push(latestSensorData.temperature);
+
+                // Limit the array length to keep a certain number of data points
+                const maxDataPoints = 5; // Adjust as needed
+                if (temperatureData.length > maxDataPoints) {
+                    temperatureData.shift();
+                }
+
+                // Update the line chart
+                updateLineChart();
+            } else {
+                console.error('Invalid data structure:', data);
+            }
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+        
+            // Fetch data initially
+            fetchData();
+        
+            // Fetch data every second
+            setInterval(fetchData, 1000);
+          </script>
+        <div class="row text-center">
+            <div class="col-sm-6 border-between-columns">
+                <h3>Temperature</h3>
+                <h4 id="temperature">Temperature: <span id="temperatureValue"></span></h4>
+            </div>
+            <div class="col-sm-6">
+                <h3>Humidity</h3>
+            <h4 id="humidity">Humidity: <span id="humidityValue"></span></h4>
+            </div>
+            
+        </div>
+        <script>
+            // เนื้อหาเดิมของ <script>
+
+            // ส่วนที่เพิ่ม: แปร global เพื่อเก็บข้อมูลอุณหภูมิ
+            let temperatureData = [];
+
+            // ฟังก์ชันเพื่อดึงข้อมูลจากเซ็นเซอร์
+            function fetchData() {
+                fetch('http://192.168.203.221:3000/sensor')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (Array.isArray(data) && data.length > 0) {
+                            const latestSensorData = data[data.length - 1];
+
+                            // อัปเดตค่าอุณหภูมิและความชื้นใน HTML
+                            document.getElementById('temperatureValue').innerText = `Temperature: ${latestSensorData.temperature}`;
+                            document.getElementById('humidityValue').innerText = `Humidity: ${latestSensorData.humidity}`;
+
+                            // เพิ่มข้อมูลอุณหภูมิลงในอาร์เรย์
+                            temperatureData.push(latestSensorData.temperature);
+
+                            // จำกัดความยาวของอาร์เรย์เพื่อเก็บจำนวนจุดข้อมูลที่แน่นอน
+                            const maxDataPoints = 5; // ปรับตามต้องการ
+                            if (temperatureData.length > maxDataPoints) {
+                                temperatureData.shift();
+                            }
+
+                            // อัปเดตกราฟ
+                            updateLineChart();
+                        } else {
+                            console.error('Invalid data structure:', data);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching data:', error));
+            }
+
+            // ฟังก์ชันเพื่ออัปเดตกราฟ
+            function updateLineChart() {
+                const ctx = document.getElementById('temperatureChart').getContext('2d');
+            
+                // Check if ctx is not null before proceeding
+                if (ctx) {
+                    // Get the existing chart
+                    const existingChart = Chart.getChart(ctx);
+            
+                    if (existingChart) {
+                        // Update the temperature value in the HTML
+                        const latestSensorData = temperatureData[temperatureData.length - 1];
+                        document.getElementById('temperatureGraphValue').innerText = `Temperature: ${latestSensorData}`;
+            
+                        // Add a new data point to the existing chart
+                        existingChart.data.labels.push(temperatureData.length * 10); // Assuming 10 as the interval
+                        existingChart.data.datasets[0].data.push(latestSensorData);
+            
+                        // Remove the first data point if the number of data points exceeds a certain limit
+                        const maxDataPoints = 5; // Adjust as needed
+                        if (existingChart.data.labels.length > maxDataPoints) {
+                            existingChart.data.labels.shift();
+                            existingChart.data.datasets[0].data.shift();
+                        }
+            
+                        // Update the chart
+                        existingChart.update();
+                    }
+                } else {
+                    console.error('Temperature chart canvas not found.');
+                }
+            }
+            // เรียกใช้ฟังก์ชันเพื่อดึงข้อมูลเริ่มต้น
+            fetchData();
+
+            // เรียกใช้ฟังก์ชันเพื่อดึงข้อมูลทุก ๆ 1 วินาที
+            setInterval(fetchData, 1000);
+
+            // เรียกใช้ฟังก์ชันเพื่ออัปเดตกราฟทุกครั้งที่ดึงข้อมูลใหม่
+            setInterval(updateLineChart, 1000);
+
+            // เรียกใช้ฟังก์ชัน logResult ทุก ๆ 3 นาที
+            setInterval(logResult, 180000);
+
+            // ส่วนที่เพิ่ม: แปะตารางที่มีชื่อเป็น resultTable และสร้างหัวตาราง
+            const resultTableBody = document.getElementById('resultTable').getElementsByTagName('tbody')[0];
+
+            // ส่วนที่เพิ่ม: แปะกราฟที่มีชื่อเป็น temperatureChart
+            const ctx = document.getElementById('temperatureChart').getContext('2d');
+
+            // ส่วนที่เพิ่ม: ให้กราฟแสดงเป็นเส้นและกำหนดค่าต่างๆ
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [], // จะเพิ่มข้อมูลลงไปทีหลัง
+                    datasets: [{
+                        label: 'Temperature',
+                        data: [],
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom'
+                        },
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        </script>
+        
+    </div>
+    <br /> <br />
+    <br /> <br />
+    <br /> <br />
+    <br /> <br />
+   
+
+    <table id="resultTable" class="table">
+        <thead>
+            <tr>
+                <th scope="col">Time</th>
+                <th scope="col">Temperature</th>
+                <th scope="col">Humidity</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- รายการผลลัพธ์จะถูกเพิ่มที่นี่ -->
+        </tbody>
+    </table>
+</div>
+</div>
+</div>
+
+</html>
